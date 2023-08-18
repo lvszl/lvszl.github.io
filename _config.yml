@@ -87,7 +87,7 @@ keywords: "Jekyll, NexT"
 rss: false
 
 # Specify the date when the site was setup
-#since: 2015
+since: 2023
 
 # icon between year and author @Footer
 authoricon: heart
@@ -226,9 +226,10 @@ social_icons:
   enable: true
   # Icon Mappings.
   # KeyMapsToSocialItemKey: NameOfTheIconFromFontAwesome
-  GitHub: github
-  Twitter: twitter
-  Weibo: weibo
+  GitHub: https://github.com/lvszl
+  知乎： https://www.zhihu.com/people/zhi-hui-meng-29
+
+  
 
 
 # Sidebar Avatar
@@ -353,7 +354,7 @@ custom_logo:
 # Available value:
 #    normal | night | night eighties | night blue | night bright
 # https://github.com/chriskempson/tomorrow-theme
-highlight_theme: normal
+highlight_theme: night
 
 
 # ---------------------------------------------------------------
@@ -631,7 +632,7 @@ pace: false
 pace_theme: pace-theme-minimal
 
 # Canvas-nest
-canvas_nest: false
+canvas_nest: true
 
 # three_waves
 three_waves: false
