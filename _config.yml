@@ -7,10 +7,10 @@
 title: lypw的博客
 subtitle: 落叶飘舞
 description: 落叶飘舞
-author: szl
+author: 诗子黎
 # Support language: de, en, fr-FR, id, ja, ko, pt-BR, pt, ru, zh-Hans, zh-hk, zh-tw
 language: zh-Hans
-date_format: '%Y-%m-%d'
+date_format: '%YYYY-%mm-%dd'
 
 # URL
 ## If your site is put in a subdirectory, set url as 'http://yoursite.com' and baseurl as '/child'
@@ -122,8 +122,8 @@ menu:
   about: /about/
   archives: /archives/
   tags: /tags/
-  #sitemap: /sitemap.xml
-  #commonweal: /404.html
+  sitemap: /sitemap.xml
+  commonweal: /404.html
 
 
 # Enable/Disable menu icons.
