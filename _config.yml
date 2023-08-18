@@ -119,7 +119,7 @@ index_with_subtitle: false
 menu:
   home: /
   #categories: /categories/
-  about: /about/shizili！！
+  about: /about/sss是
   archives: /archives/
   tags: /tags/
   sitemap: /sitemap.xml
@@ -227,7 +227,7 @@ social_icons:
   # Icon Mappings.
   # KeyMapsToSocialItemKey: NameOfTheIconFromFontAwesome
   GitHub: https://github.com/lvszl
-  知乎： https://www.zhihu.com/people/zhi-hui-meng-29
+  知乎: https://www.zhihu.com/people/zhi-hui-meng-29
 
   
 
