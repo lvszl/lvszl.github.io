@@ -1,3 +1,14 @@
+# Hi there 👋
+[![Typing SVG](https://readme-typing-svg.herokuapp.com?font=Fira+Code&pause=1000&width=435&lines=%E4%BA%B2%E7%88%B1%E7%9A%84%E6%9C%8B%E5%8F%8B%EF%BC%8C%E4%BD%A0%E5%A5%BD%E5%91%80%F0%9F%91%8B;Jump%EF%BC%81Jump%EF%BC%81Jump%EF%BC%81;%E6%B0%B8%E8%BF%9C%E5%B9%B4%E8%BD%BB%EF%BC%8C%E6%B0%B8%E8%BF%9C%E7%83%AD%E6%B3%AA%E7%9B%88%E7%9C%B6%EF%BC%81)](https://git.io/typing-svg)
+- 🤔 My name is Shi Zili（诗子黎）
+- 🔭 I’m currently working on [SDU](https://www.sdu.edu.cn/)
+- 💬 The website of my blog is https://lypw.life/
+- 🌱 I’m currently learning computer science and technology
+
+**贪吃蛇**
+<div align="center"><img src="https://raw.githubusercontent.com/Achuan-2/Achuan-2/main/assets/github-contribution-grid-snake.svg" ></div>
+
+
 # NexT
 
 > 精于心，简于形
@@ -6,30 +17,4 @@ NexT 是由 [Hexo NexT](https://github.com/iissnan/hexo-theme-next) 移植而来
 
 <a href="http://simpleyyt.github.io/jekyll-theme-next/" target="_blank">在线预览 Preview</a> | <a href="http://simpleyyt.com" target="_blank">Yitao's Blog</a> | <a href="http://theme-next.simpleyyt.com" target="_blank">NexT 使用文档</a> |  [English Documentation](README.en.md)
 
-[![Join the chat at https://gitter.im/simpleyyt/jekyll-theme-next](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/jekyll-theme-next/lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-![NexT Schemes](http://iissnan.com/nexus/next/next-schemes.jpg)
-
-
-## 浏览器支持 Browser support
-
-![Browser support](http://iissnan.com/nexus/next/browser-support.png)
-
-
-## 贡献 Contributing
-
-欢迎提交问题与需求，修复代码。
-
-
-## 开发 Development
-
-NexT 主旨在于简洁优雅且易于使用，所以首先要尽量确保 NexT 的简洁易用性。
-
-NexT is built for easily use with elegant appearance. First things first, always keep things simple.
-
-
-## 捐赠
-
-支付宝捐赠链接还是要有的，万一真的有人捐呢。
-
-![支付宝扫码捐赠](http://7lryc0.com1.z0.glb.clouddn.com/a6x049034plyvjm1rvn4h28%20%281%29.png)
