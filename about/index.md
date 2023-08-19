@@ -12,3 +12,5 @@ type: about
 
 **贪吃蛇**
 <div align="center"><img src="https://raw.githubusercontent.com/Achuan-2/Achuan-2/main/assets/github-contribution-grid-snake.svg" ></div>
+
+![泰山学堂](/downloads/image/泰山学堂.png)
