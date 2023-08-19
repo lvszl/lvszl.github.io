@@ -20,4 +20,4 @@ categories: MIT-Xv6
 **测试：**
 ​
 
-![Alt text](_posts\image1.png)
+![测试截图](/download/image1.png)
