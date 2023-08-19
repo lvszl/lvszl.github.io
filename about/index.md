@@ -2,6 +2,7 @@
 layout: page
 type: about
 ---
+# 你好朋友！
 
 ### Hi there 👋
 [![Typing SVG](https://readme-typing-svg.herokuapp.com?font=Fira+Code&pause=1000&width=435&lines=%E4%BA%B2%E7%88%B1%E7%9A%84%E6%9C%8B%E5%8F%8B%EF%BC%8C%E4%BD%A0%E5%A5%BD%E5%91%80%F0%9F%91%8B;Jump%EF%BC%81Jump%EF%BC%81Jump%EF%BC%81;%E6%B0%B8%E8%BF%9C%E5%B9%B4%E8%BD%BB%EF%BC%8C%E6%B0%B8%E8%BF%9C%E7%83%AD%E6%B3%AA%E7%9B%88%E7%9C%B6%EF%BC%81)](https://git.io/typing-svg)
