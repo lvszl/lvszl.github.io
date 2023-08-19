@@ -21,4 +21,4 @@ Hello!
 
 ### 小说
 
-1. [《遮天txt》](/downloads/book/遮天.txt)
+1. [《遮天txt》](/_posts/2023-8-18-遮天.md)
