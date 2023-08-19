@@ -4,7 +4,7 @@
 # ---------------------------------------------------------------
 
 # Site
-title: lypw的博客
+title: 诗子黎的博客
 subtitle: 落叶飘舞
 description: 落叶飘舞
 author: 诗子黎
@@ -126,7 +126,7 @@ menu:
   tech: /tech/
   life: /life/
   friends: /friends/
-  commonweal: /404.html
+  # commonweal: /404.html
 
 
 # Enable/Disable menu icons.
