@@ -1,9 +1,9 @@
-# 坑：ssh: connect to host github.com port 22: Connection refused
 ---
 data: 2023-8-19
 categories: git
-# tags: 随笔
+tags: tech
 ---
+
 本文摘自：https://zhuanlan.zhihu.com/p/521340971，用来解决ssh: connect to host github.com port 22: Connection refused问题
 
 # 问题
