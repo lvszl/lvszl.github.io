@@ -14,7 +14,7 @@ type: life
 
 大无语事件，就是有人在健身房直播！立着手机还占位置，还让别人都没法用，也不敢用。
 
-{% details %}
+
 
 **悍马机正手下拉：**
 
@@ -54,4 +54,4 @@ type: life
 
 ![](https://raw.githubusercontent.com/lvszl/figure/master/fd71ef493c072739f438ecd6420f1c1.jpg)
 
-{% enddetails %}
+
