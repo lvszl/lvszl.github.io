@@ -16,5 +16,8 @@ type: about
 
 ![泰山学堂](/downloads/image/泰山学堂.png)
 
-![](https:cdn.jsdelivr.net/gh/lvszl/figure/QQ%E5%9B%BE%E7%89%8720230827155902.gif)
 
+
+## 多睡觉！
+
+![](https:cdn.jsdelivr.net/gh/lvszl/figure/20230827171515.png)
