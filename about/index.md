@@ -20,4 +20,6 @@ type: about
 
 ## 多睡觉！
 
-![](https:cdn.jsdelivr.net/gh/lvszl/figure/20230827171515.png)
+
+
+![](https://raw.githubusercontent.com/lvszl/figure/master/20230827174526.png)
