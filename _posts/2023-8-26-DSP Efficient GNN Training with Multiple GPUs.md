@@ -117,7 +117,7 @@ DSP：
 
 ### 训练过程
 
-如图4，没个GPU中有3个东西：
+如图4，每个GPU中有3个东西：
 
 **Sampler采样器**
 
@@ -132,4 +132,95 @@ DSP：
 就是获取采样器采集到的描述图样本的节点的特征向量，热门节点直接在显存中获得，冷门节点则在内存中获得，两者并行，因为一个用NVLink，一个用PCIe
 
 **trainer训练器**
+
+每个训练器都有模型参数的副本，就是用loader给过来的特征向量进行训练，分别计算最终的输出以及梯度，然后部署在不同GPU上的trainer，用collective allerduce聚合梯度。
+
+**同一批量的三个er，顺序执行**
+
+对于不同批量，作者设计了前文提到“生产者消费者管道”来并行利用GPU资源。
+
+***注意***
+
+>当只有一个GPU时候，Sampler和Loader就变成本地服务了，不再需要从其他GPU上采集交换信息。
+
+> DSP可在多机多GPU上运行，此时DSP会将图的拓扑结构和热节点复制到每个机器中，然后不同的机器存储不同的冷节点，机器之间仅需要传送关于冷节点的知识，同一个机器内部将图进程划分，存在不同的GPU上
+
+## CSP:集体采样原语
+
+主要用于GPU之间的通信。
+
+### 工作流程
+
+CSP可用Node-wise和layer-wise，但我们假设CSP采用Node-wise的方法逐层采样：以图3（b）为例
+
+在具体采样过程中，对于每一层，CSP由**所有**GPU上的采样器共同来执行完采样工作，且采样工作分三个阶段完成：shuffle，sample，reshuffle。
+
+例图：
+
+
+
+<center class="half">
+    <img src="https://raw.githubusercontent.com/lvszl/figure/master/20230828201855.png">
+    <img src="https://raw.githubusercontent.com/lvszl/figure/master/20230828125109.png">
+</center>
+
+有2个GPU，4个seed node(作为训练样本的节点)
+
+- 在shuffle阶段：利用GPU之间的通信，将每个seed node交给存有其临街列表的GPU，如$E$与$B$换位置了（数据推送）
+
+- 在sample阶段：每个GPU在本地存放的邻接表中找出自己有的seed node的所有邻居节点，并进行采样（挑出来几个，如$A$挑选出了$C$与$E$）
+- 在reshuffle阶段：把shuffle阶段换走的seed node换回来，同时连带着其在sample阶段采样的节点一起回来。
+
+> 采样的每个阶段，都设置了同步操作来保证各个GPU的进度一致。
+
+### CSP长什么样子
+
+#### 参数
+
+![](https://raw.githubusercontent.com/lvszl/figure/master/20230828205021.png)
+
+采样方式：
+
+- 有偏采样：按照每个节点权重占比作为其被选择的概率，权重放到边上。
+- 无偏采样：大家概率一样
+
+我们发现，由于在$shuffle$阶段，每个seed node都被换到了存有其邻接表的GPU中，因此无论有偏采样还是无偏采样均可以通过只访问GPU实现。
+
+$frontier~node$： 其邻居将被采样的节点。
+
+由于DSP与CSP支持两种主流的图采样：node-wise和layer-wise，因此，以下分别介绍这两种：
+
+在$node-wise$中，fan-out向量直接指出了每层中每个$frontier~node$采样的邻居节点的数量；
+
+在$layer-wise$中，fan-out向量只能确定每层中所有$frontier~node$总共采样的邻居节点的数量，具体确定每个$frontier~node$采样的邻居数量的方式，也是按照其邻居的总权重占所有$frontier~node$ 的邻居的总权重的占比确定的。
+
+ ## 消费者生产者管道
+
+同一小批量数据在GPU中必须要依次走过采样器，装载器和训练器，必须同步执行。但不同的小批量数据无所谓，同时，由于同步问题，且有些数据利于计算，有些不利于，但每个阶段所有GPU必须同步执行，因此就会造成GPU的闲置，于是就设计了这种管道重叠执行不同的小批量任务。
+
+如图：
+
+![](https://raw.githubusercontent.com/lvszl/figure/master/20230828213108.png)
+
+------
+
+在这里再理一下DSP模型：
+
+其结构是这样的：![](https://raw.githubusercontent.com/lvszl/figure/master/20230828093411.png)，然后，每个GPU只存部分图节点和其邻接表。但每个GPU
+
+不定地被分到哪一个小批量数据的训练任务。当其被分到一个小批量任务时候，他拿到seed nodes，作为此时的frontier node，进入Sampler进行采
+
+样。采样过程细化为这个图：![](https://raw.githubusercontent.com/lvszl/figure/master/20230828201855.png)， 采样时候由CSP原语控制，由于某个GPU的
+
+任务可能会涉及到一些他没存储的节点（如GPU1中的E节点），那么他需要借助其他GPU的采用器，同时调用GPU们的通信内核，shuffle这些seed node。采样的每个小阶段，都需要不同GPU之间的配合，主要调用GPU的通信内核，但负荷很轻，因此可以同一个GPU可以同时执行多个采样任务。采样完毕后，该GPU的才能执行loader和trainer，因此采样时候该GPU的计算内核就被空闲了，所以它在采样时候可以同时运行多个计算任务。这时候，这些其他的loader和trainer任务从哪里来，就用到了管道。
+
+**这里可以看出管道的一个用处，就是把同一个批量的训练任务的三个阶段：Sampler，loader，trainer分开了，尽管是同步执行的，但不再是必须在同一个GPU上执行**
+
+------
+
+**结果：**
+
+![](https://raw.githubusercontent.com/lvszl/figure/master/20230828220440.png)
+
+DSP-Seq为顺序执行，没有管道，DSP为有管道，纵轴为GPU的利用率。
 
