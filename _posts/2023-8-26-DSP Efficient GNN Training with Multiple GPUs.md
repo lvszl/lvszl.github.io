@@ -263,5 +263,71 @@ DSP-Seq为顺序执行，没有管道，DSP为有管道，纵轴为GPU的利用�
 
 右图则表明DSP能在更短的时间内训练完成。
 
-<img src="https://raw.githubusercontent.com/lvszl/figure/master/20230829182924.png"/>
+**用GNN进行测试：**
+
+<img src="https://raw.githubusercontent.com/lvszl/figure/master/20230829204423.png"/>
+
+这个图说明每轮的训练时间，DSP均是最优的。
+
+**用GCN（图卷积）进行测试**
+
+<img src="https://raw.githubusercontent.com/lvszl/figure/master/20230829205355.png"/>
+
+
+
+发现也是极优的。
+
+**然后作者进行了进一步测试**：
+
+### 说明图拓扑结构存入GPU显存的优越性
+
+为了说明DSP将图拓扑结构也存入GPU是优于只讲图的节点特征存入GPU的Quiver：
+
+限制每个GPU的显存的大小由24GB改为6GB，同样用8个GPU，来训练两个较大的图：$Papers$和$Friendster$
+
+![image-20230829210713147](2023-8-26-DSP Efficient GNN Training with Multiple GPUs.assets/image-20230829210713147.png)
+
+图中是DSP的结果，发现当分配给用于存储节点特征显存为2GB时候，效果最明显，因为此时用于存放图拓扑的内存总容量为4*8=32G，大于图拓扑大小：
+
+<img src="https://raw.githubusercontent.com/lvszl/figure/master/20230829211017.png"/>
+
+同时，由于进行采样时候，主要用部分热门节点的节点特征，因此增加对节点特征的存储会使得收益变低，而增加图的拓扑结构则会是收益变高，因为采样时候就可以尽量通过NVLink而不是PCIe进行操作了，因此，曲线先下后上。
+
+由此说明，将图拓扑结构存入GPU是收益很大的一件事情。
+
+### 说明图采样过程CSP的优越性：
+
+<img src="https://raw.githubusercontent.com/lvszl/figure/master/20230829211648.png"/>
+
+结果表明，仅就图采样过程，DSP也是极其优秀的，最多可快20倍，并且提升还优于线性。
+
+**主要原因是，DSP将图拓扑结构尽量存在显存中，采样过程通过NVLink而不是PCIe**
+
+### 说明DSP通过“push data”的方式进行采样是优越的
+
+前文说到，DSP在采样中一般采用push data的方式，就是对于采样任务，把不存有该点的GPU的采样任务，推送给存有该点邻接表的GPU上进行采样，采样完再送回来。对于pull data的方式，是将没有的邻接表拉入执行任务的GPU，然后进行采样，这样会导致一个显著的问题，就是拉来了很多不必要的数据。
+
+![](https://raw.githubusercontent.com/lvszl/figure/master/20230829213222.png)
+
+### 然后说明如果在采样时DSP采用layer-wise的采样方式，也是优越的
+
+当前的其他系统均不支持在GPU上进行layer-wise采样，因此作者比较了在CPU上的FastGCN系统：
+
+![](https://raw.githubusercontent.com/lvszl/figure/master/20230829213644.png)
+
+可以发现，提升巨大。
+
+### 然后说明DSP采用training pipelin的方式是优越的
+
+下图说明和DSP-seq的比较：
+
+![](https://raw.githubusercontent.com/lvszl/figure/master/20230829213838.png)
+
+可以发现均优于DSP-seq
+
+
+
+
+
+
 
