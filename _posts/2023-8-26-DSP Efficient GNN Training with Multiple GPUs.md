@@ -204,7 +204,7 @@ $frontier~node$： 其邻居将被采样的节点。
 
 ------
 
-在这里再理一下DSP模型：
+在这里再理一下DSP模型：每个GPU内部，用三个东西：Sampler，Loader和Trainer，这三个东西在行动时候，需要占用特定的SM，但这些SM可能会重叠。对于同一个小批量任务，必须按照Sampler，Loader以及Trainer的顺序执行，但是可以在GPU1上的Sampler执行，然后到GPU2上执行Loader，最后在GPU3上执行Trainer。但每个GPU执行Sampler Loader以及Trainer时候，都会需要其他某些GPU参与，且要求也调用与之相同的东西。
 
 其结构是这样的：![](https://raw.githubusercontent.com/lvszl/figure/master/20230828093411.png)，然后，每个GPU只存部分图节点和其邻接表。但每个GPU
 
@@ -212,7 +212,7 @@ $frontier~node$： 其邻居将被采样的节点。
 
 样。采样过程细化为这个图：![](https://raw.githubusercontent.com/lvszl/figure/master/20230828201855.png)， 采样时候由CSP原语控制，由于某个GPU的
 
-任务可能会涉及到一些他没存储的节点（如GPU1中的E节点），那么他需要借助其他GPU的采用器，同时调用GPU们的通信内核，shuffle这些seed node。采样的每个小阶段，都需要不同GPU之间的配合，主要调用GPU的通信内核，但负荷很轻，因此可以同一个GPU可以同时执行多个采样任务。采样完毕后，该GPU的才能执行loader和trainer，因此采样时候该GPU的计算内核就被空闲了，所以它在采样时候可以同时运行多个计算任务。这时候，这些其他的loader和trainer任务从哪里来，就用到了管道。
+任务可能会涉及到一些他没存储的节点（如GPU1中的E节点），那么他需要借助其他GPU的采用器，同时调用GPU们的通信内核，shuffle这些seed node。采样的每个小阶段，都需要不同GPU之间的配合，主要调用GPU的通信内核，但负荷很轻（只需要少部分的内核参与即可），且只需要少量的带宽就可以完成通信，多余的带宽可以让其他通信内核使用。采样完毕后，该GPU的才能执行loader和trainer，因此采样时候该GPU的部分计算内核就被空闲了，所以它在采样时候可以同时运行多个计算任务。这时候，这些其他的loader和trainer任务从哪里来，就用到了管道。**loader和trainer过程也需要用到通信内核与其他GPU进行交互。**
 
 **这里可以看出管道的一个用处，就是把同一个批量的训练任务的三个阶段：Sampler，loader，trainer分开了，尽管是同步执行的，但不再是必须在同一个GPU上执行**
 
@@ -223,4 +223,45 @@ $frontier~node$： 其邻居将被采样的节点。
 ![](https://raw.githubusercontent.com/lvszl/figure/master/20230828220440.png)
 
 DSP-Seq为顺序执行，没有管道，DSP为有管道，纵轴为GPU的利用率。
+
+### 处理死锁问题
+
+死锁产生的原因：
+
+1. GPU内核的分配直到任务结束是不可撤销的，也就是不可剥夺的，非抢占式调度
+2. 且通信必须在所有参与通信的GPU的通信内核启动时候才会进行，否则就等待。
+
+例子：
+
+<img src="https://raw.githubusercontent.com/lvszl/figure/master/20230829095841.png" style="zoom:160%"/>
+
+**SM为流处理多处理器，里面通常包含多个CUDA核心，每个GPU内有多个SM**，每个内核需要调用多个SM来完成任务。
+
+在这里，负责Sampler通信的通信内核需要多个SM，假设GPU1的需要SM1，SM2，SM4，其余GPU的Sampler和Loader同理。
+
+然后GPU1想完成Sampler任务，需要GPU2 的Sampler参与，但GPU2的Sampler需要SM2与SM3，但被GPU2的Loader占用了，但Loader没法释放资源，因为任务没完成，它想完成任务需要等待GPU1的Loader与之通信。
+
+**解决办法** 
+
+采用集中式通信协调方案：即，专门用一个GPU，作为leader，来规定其他所有GPU的通信内核的启动顺序。
+
+具体操作：
+
+为每个工作实例，比方说，对于每个小批量训练任务，我们都会安排执行该任务的worker（Sampler，Loader，Trainer），然后为每个worker分配固定的id，无论他们在哪个GPU上。
+
+对于每个GPU，当工作的线程准备好进行通信时，会将其对应的id放到待处理集合中，然后Leader使用队列来管理这个集合，并且按照提交顺序启动通信内核。一旦启动某个worker的通信内核，就会把他的id广播到所有的GPU中，然后需要配合的GPU就会开始配合它进行通信，
+
+## 实验
+
+训练过程：
+
+<img src="https://raw.githubusercontent.com/lvszl/figure/master/20230829182415.png"/>
+
+
+
+左图，表明，DSP的准确度在随着小批量的增多时，与已有系统是一致的，这说明DSP的训练有效性。
+
+右图则表明DSP能在更短的时间内训练完成。
+
+<img src="https://raw.githubusercontent.com/lvszl/figure/master/20230829182924.png"/>
 
