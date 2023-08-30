@@ -285,7 +285,7 @@ DSP-Seq为顺序执行，没有管道，DSP为有管道，纵轴为GPU的利用�
 
 限制每个GPU的显存的大小由24GB改为6GB，同样用8个GPU，来训练两个较大的图：$Papers$和$Friendster$
 
-![image-20230829210713147](2023-8-26-DSP Efficient GNN Training with Multiple GPUs.assets/image-20230829210713147.png)
+<img src="https://raw.githubusercontent.com/lvszl/figure/master/20230830112851.png"/>
 
 图中是DSP的结果，发现当分配给用于存储节点特征显存为2GB时候，效果最明显，因为此时用于存放图拓扑的内存总容量为4*8=32G，大于图拓扑大小：
 
