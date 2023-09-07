@@ -15,3 +15,12 @@ tag: 英语
 3. by a large margin : adv 大幅度地
 
 > The results show that DSP consistently outperforms the baselines by a large margin.
+
+
+
+1. the overhead of  ... 的开销，overhead常见意思为”在...上方"
+
+> Several previous studies try to reduce the overhead of expert parallelism or combine expert parallelism with other parallel strategies.
+
+
+
