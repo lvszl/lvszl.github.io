@@ -133,3 +133,17 @@ expert placement plan 指的是从专家子网络到专家槽的一个映射，�
 
 *优点*
 
+1:  灵活性高
+
+2:  切换执行方案时候开销小。因为不同方案仅体现为expert placement的不同，他们具有相同的expert slot，切换时无需内存的变动，而仅需worker之间进行参数交换。
+
+## 5.2 工作负载感知的性能模型 Workload-Aware Performance Modeling
+
+**性能模型使得在训练之前就能评估不同pool的性能，**但动态工作负载使得我们在实际运行之前无法得知。
+
+因此要估计训练工作量：在训练之前估计专家选择的输出，具体来说，是估计门控（gating）网络（见下图2）的输出。
+
+<img src="https://raw.githubusercontent.com/lvszl/figure/master/20230907153413.png"/>
+
+然后我们将该性能模型应用于候选池，并在开始分布式训练之前枚举搜索空间。
+
