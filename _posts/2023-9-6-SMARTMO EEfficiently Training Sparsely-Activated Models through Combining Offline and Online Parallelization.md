@@ -147,3 +147,71 @@ expert placement plan 指的是从专家子网络到专家槽的一个映射，�
 
 然后我们将该性能模型应用于候选池，并在开始分布式训练之前枚举搜索空间。
 
+目前最先进的门控网络（gating networks）分为两类：
+
+1. load-balanced gating networks 负载均衡门控网络
+
+保证expert的负载是均衡的。
+
+<img src="https://raw.githubusercontent.com/lvszl/figure/master/20230910160104.png"/>
+
+图6表示这种类型中典型的门控网络`GShard`的专家选择过程。
+
+> `GShard`门设计的关键是容量因子（capacity factor），它限制了分配给专家的训练样本比例。
+
+如图6，容量因子分别设为$+\infty$，1.2, 4.8，不同的容量因子会导致专家上不同的样本分配比例，我们因此可以算出任何专家的工作负载上限，然后把这个作为训练过程的瓶颈，来预测pool的性能。
+
+2. topology-aware gating networks 拓扑感知的门控网络。
+
+其限制了all to all调度阶段跨节点通信的大小。
+
+如图6右上角，faster Gate的可视化：这个例子聚类有16个设备，分布在4个节点上，为了避免跨节点的地带宽，它更喜欢将训练样本分配给同一节点内的专家，如图：大多数专家选择都是在对角线的4*4块中。
+
+**这第二种网络也没看懂**
+
+
+
+当我们获得完专家选择也就是门控网络的输出后，我们就可以利用现有的性能模型来估计执行计划的性能，并用估计的工作负载作为其输入（我觉得应该是每个专家都达到最大的工作负载）。并且由于训练开始前的时间较为充裕，因此我们可以采用多花一点时间来寻找具有作家估计性能的pool。
+
+# 6 online adaptive Parallelization 在线自适应并行化
+
+## 6.1 light-wight searching 轻量级搜索
+
+**贪心算法**
+
+首先，简化 expert placement problems：
+
+假设有$E$个专家，$N$个设备，第$i$个专家被gating network分到了$C_i$个训练样本，我们就需要决定这些专家在对应设备上的分布，其中，用$P_i$表示第$i$个专家的位置，优化目标是最小化式：
+
+![](https://raw.githubusercontent.com/lvszl/figure/master/20230910201159.png)
+
+> $P_i$是一个集合，里面只有一个元素，就是第i个专家分布在的设备的编号上。$||P_i||$ 应该表示该集合中元素的个数，此处恒为1
+
+$\frac{C_i}{||P_i||}$表示**没看懂**，先看算法，该算法1按照**每个专家的计算量$C_i$ .**的降序来决定其位置，同时，为了避免增加某些设备上的内存开销，一台设备中放置的专家数量限制为$\frac{E}{N}$ ，即不超过平均值。算法1的时间复杂度为$O(NE)$
+
+<img src="https://raw.githubusercontent.com/lvszl/figure/master/20230910211026.png"/>
+
+即：把工作量最大的expert尽可能分到目前总工作量最小的设备上。
+
+## 6.2 Efficient adaptive training
+
+我们通过启发式算法来调整这些参数：
+
+### Threshold of switching overhead 交换开销的阈值
+
+针对不同的负载切换执行计划会带来通信开销。作者用一个阈值来筛选掉哪些对性能提升不大但会带来大的通信开销的方案。
+
+### Frequency of Online Searching 在线搜索的频率
+
+由于神经网络参数变化在一定时间内不大，因此我们可以每隔几次迭代进行一次在线搜索。合适的频率通过实验来选择。
+
+### Frequency of History Collecting. 历史记录收集的频率
+
+为了进行在线搜索，我们需要获得以往专家选择的历史。通过实验发现，仅在在线适应迭代之前的几次迭代中收集专家选择的历史记录即可。
+
+# 7 评估
+
+
+
+
+
