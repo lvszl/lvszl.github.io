@@ -5,7 +5,7 @@ category: 系统论文
 
 # 2 Background and Motivation
 
-MoE：Misture-of-Experts
+MoE：Misture-of-Expertsn
 
 <img src="https://raw.githubusercontent.com/lvszl/figure/master/20230907153413.png"/>
 
@@ -141,11 +141,15 @@ expert placement plan 指的是从专家子网络到专家槽的一个映射，�
 
 **性能模型使得在训练之前就能评估不同pool的性能，**但动态工作负载使得我们在实际运行之前无法得知。
 
+为此，建造了一个数据敏感型的性能模型。
+
 因此要估计训练工作量：在训练之前估计专家选择的输出，具体来说，是估计门控（gating）网络（见下图2）的输出。
 
 <img src="https://raw.githubusercontent.com/lvszl/figure/master/20230907153413.png"/>
 
-然后我们将该性能模型应用于候选池，并在开始分布式训练之前枚举搜索空间。
+**方法：**我们得到门控网络具体算法后，能算出任何专家的最大工作量，我们就用每个专家的最大工作量，作为其实际工作量，然后来预测我们创建的pool的性能。
+
+然后我们将该性能模型应用于候选池，并在开始分布式训练之前**枚举**搜索空间。
 
 目前最先进的门控网络（gating networks）分为两类：
 
@@ -191,7 +195,7 @@ $\frac{C_i}{||P_i||}$表示**没看懂**，先看算法，该算法1按照**每�
 
 <img src="https://raw.githubusercontent.com/lvszl/figure/master/20230910211026.png"/>
 
-即：把工作量最大的expert尽可能分到目前总工作量最小的设备上。
+**总结：把工作量最大的expert尽可能分到目前总工作量最小的设备上。**
 
 ## 6.2 Efficient adaptive training
 
@@ -211,7 +215,102 @@ $\frac{C_i}{||P_i||}$表示**没看懂**，先看算法，该算法1按照**每�
 
 # 7 评估
 
+## 7.1 实验设置
+
+**Clusters** 实验在3个代表性集群上评估了SmartMoE，如下表：
+
+<img src="https://raw.githubusercontent.com/lvszl/figure/master/20230910231739.png"/>
+
+**Models** 用于评估的模型如下表：
+
+<img src="https://raw.githubusercontent.com/lvszl/figure/master/20230910231923.png"/>
+
+一个是用于NLP的GPT-MoE，一个是用于CV的Swin-MoE，门控网络用GShard（容量因子越小，工作负载越平衡）。应用具有不同容量因子的GShard门来评估我们的系统端优化。
+
+**Baseline** SmartMoE与4个训练模型进行对比：DeepSpeed，Tutel，FasterMoE， Alpa。
+
+
+
+**Evaluation Metrics** （评估指标）
+
+
+
+## 7.2 End-to-end speedup
+
+作者评估了两种模型在三个不同集群上端到端性能。$X/Y$表示对容量因子为Y的X台设备进行评估，结果如下：
+
+<img src="https://raw.githubusercontent.com/lvszl/figure/master/20230911172019.png"/>
+
+为什么inky上的效果更好呢？因为inky上节点间和节点内链路之间的带宽距更大，从而使得混合并行更加高效。而且inky在一个节点中有更多的Gpu，增加了可能得节点内并行策略。
+
+<img src="https://raw.githubusercontent.com/lvszl/figure/master/20230911190020.png"/>
+
+## 7.3 离线并行消融实验
+
+> Ablation Study（消融研究）是科学研究中的一种方法，通常用于评估系统或模型中各个组成部分的贡献或影响。这种方法在多个领域中都有应用，包括计算机科学、医学、地球科学等。
+>
+> 在计算机科学和机器学习领域，Ablation Study通常用于评估机器学习模型的性能，特别是在深度学习和神经网络中。它的基本思想是通过逐个去除或"消融"模型中的某些组件或特征，然后观察这些组件的去除对模型性能的影响。这有助于研究人员理解模型中不同组件的相对重要性，从而有助于改进模型的设计和性能。
+>
+> 例如，如果研究人员想要了解一个深度神经网络中不同层对最终分类性能的贡献，他们可以进行Ablation Study，逐层禁用或移除某些层，然后比较性能差异。这有助于确定哪些层对性能起关键作用，哪些层可以被简化或省略。
+
+**研究离线并行化算法的有效性**
+
+又做了一个实验，基线为FasterMoE，并且禁用了所有系统的在线优化，结果如下。
+
+<img src="https://raw.githubusercontent.com/lvszl/figure/master/20230911215647.png"/>
+
+结果说明该模型可以找出效果优良的pool
+
+然后图10表明了数据敏感性能模型的准确性：
+
+<img src="https://raw.githubusercontent.com/lvszl/figure/master/20230911220721.png"/>
+
+图中$X-Y$表示在本地批量大小为Y的X个设备上的评估。横坐标表示性能模型评估的结果，纵坐标表示真实的性能结果，可以发现点总是集中在$y = x$这条线上，结果较为准确。
 
 
 
 
+
+
+
+## 7.4 在线并行消融研究
+
+**评估SmartMoE中自适应并行化方法的性能改进**，
+
+条件：MoE模型有16层；在pinky集群上研究。
+
+执行计划的更改为每训练10轮更新一次。
+
+下图显示了所有16个MoE层的加速比：
+
+<img src="https://raw.githubusercontent.com/lvszl/figure/master/20230912155916.png"/>
+
+结论：MoE每层能实现1.16倍加速比，相比于不进行自适应并行化方法；第二层能有1.43倍的加速比。
+
+
+
+**另一个实验**
+
+下图显示了一个MoE层从迭代1-1500次的延迟。
+
+<img src="https://raw.githubusercontent.com/lvszl/figure/master/20230912160317.png"/>
+
+不同频率使用动态执行策略或者静态执行策略，并用曲线显示每轮执行时间。
+
+图中$dyn.X$ 表示每X次迭代切换执行计划。
+
+结论：每当切换执行策略时候，训练用时会明显减少，切换频率并不是越高越好。
+
+**没解决的问题：如何设置适当的动态并行化频率。**
+
+
+
+## 7.5 细粒度的性能分解
+
+结果在图13中：
+
+<img src="https://raw.githubusercontent.com/lvszl/figure/master/20230912161919.png"/>
+
+> 容量因子：
+>
+> 此术语通常用于GShard中，它是一种扩展巨型模型的技术，使用了条件计算和自动分片。容量因子是指MoE中每个专家的容量，也就是每个专家的参数量。
