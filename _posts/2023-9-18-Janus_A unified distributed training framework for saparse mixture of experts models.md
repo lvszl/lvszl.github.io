@@ -123,7 +123,7 @@ Transformer块（figure1（a））通常由两部分组成：注意力层和前�
 
 SmartMoE专注于平衡不同device之间的负载，通过训练一定轮数后，依据历史训练信息——不同expert的负载，来将他们分配给不同的device（每个worker有多个expert）
 
-Janus则专注于在一个训练迭代过程进行expert的拉取，调整expert是为了在需要的设备上训练训练对应的输入（每个worker只有一个expert），并不是为了平衡device的负载差异。
+Janus则专注于在一个训练迭代过程进行expert的拉取，**调整expert是为了在需要的设备上训练训练对应的输入（每个worker只有一个expert），并不是为了平衡device的负载差异。**
 
 ------
 
@@ -131,7 +131,7 @@ Janus则专注于在一个训练迭代过程进行expert的拉取，调整expert
 
 ![](https://raw.githubusercontent.com/lvszl/figure/master/20230921200726.png)
 
-每个worker存储其上的Experts的权重，并且每轮迭代后在worker上更新参数。
+每个worker存储其上的Experts的权重，并且每轮迭代(iter)后在worker上更新参数。
 
 训练流程：
 
@@ -173,4 +173,26 @@ Janus将工作人员的所有非本地专家的请求分成一组小任务，每
 这个图画的很好，在图（a）中，采用experts-centric模式，必须同步进行，先所有expert进行计算，然后all-to-all后再进行反向传播。
 
 而图（b）则表明，用Data-centric时候可以异步进行计算。同步的时机：迭代结束时，然后更新所有expert的权重，此时的操作是同步的。
+
+> **不过有个问题，如果计算同一个ep的时候，有某个expert同时被多个worker用怎么办？这里没给出怎么处理这种情况。**
+
+**intra-node scheduler 的具体细节如下**
+
+提供了一个基于credit的缓冲区来实现异步通信机制。
+
+GPU中的部分内存首先被分配，来保存其上worker拉取过来的expert，——参数：credit：该GPU上这部分内存能够存储的expert的数量。当用完后，拉取expert的操作就堵塞。
+
+### 5.1.2 Hierarchical Communication Mechanism in Inter-Node Scheduler.
+
+多机多卡中，inter-node 的带宽小于intra-node（内部节点）的带宽（NVlink），故我们应该尽可能减少外部节点的流量（inter-node）
+
+**速度：inter-node小，intra-node大**
+
+因此我们用inter-node scheduler来负责收集和合并同一个外部专家的请求：
+
+在forward computation：直接看前文的描述就行。
+
+在backward computation：
+
+backward过程由于只在expert上进行计算，所以不设计expert位置的移动，但传播完后，需要把梯度送回expert的初始位置上，并更新参数。天真地，每个 GPU 生成的梯度将分别发送到目标 GPU，然后目标 GPU 减少（即平均）来自所有工作人员的梯度。
 
